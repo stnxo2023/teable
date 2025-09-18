@@ -361,6 +361,7 @@ export class PluginPanelService {
       throw new NotFoundException('Plugin install not found');
     }
     return {
+      baseId,
       name: pluginInstall.name,
       tableId,
       pluginId: pluginInstall.pluginId,

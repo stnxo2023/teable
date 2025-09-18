@@ -2,6 +2,7 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import type { INestApplication } from '@nestjs/common';
 import {
+  CellFormat,
   Colors,
   FieldType,
   isGreater,
@@ -9,21 +10,32 @@ import {
   StatisticsFunc,
   TimeFormatting,
 } from '@teable/core';
-import type { ITableFullVo } from '@teable/openapi';
-import { createTable, baseQuery, BaseQueryColumnType, BaseQueryJoinType } from '@teable/openapi';
+import type { IBaseQuery, ITableFullVo } from '@teable/openapi';
+import { createTable, BaseQueryColumnType, BaseQueryJoinType } from '@teable/openapi';
+import { BaseQueryService } from '../src/features/base/base-query/base-query.service';
 import { initApp } from './utils/init-app';
 
 describe('BaseSqlQuery e2e', () => {
   let app: INestApplication;
   const baseId = globalThis.testConfig.baseId;
+  let baseQueryService: BaseQueryService;
   beforeAll(async () => {
     const appCtx = await initApp();
     app = appCtx.app;
+    baseQueryService = app.get(BaseQueryService);
   });
 
   afterAll(async () => {
     await app.close();
   });
+
+  const baseQuery = async (
+    baseId: string,
+    baseQuery: IBaseQuery,
+    cellFormat: CellFormat = CellFormat.Text
+  ) => {
+    return await baseQueryService.baseQuery(baseId, baseQuery, cellFormat);
+  };
 
   describe('Iterate through each query capability', () => {
     let table: ITableFullVo;
@@ -93,7 +105,7 @@ describe('BaseSqlQuery e2e', () => {
         ],
       });
 
-      expect(res.data.rows).toEqual([
+      expect(res.rows).toEqual([
         expect.objectContaining({ [`${table.fields[1].id}_${StatisticsFunc.Average}`]: 30 }),
       ]);
     });
@@ -113,8 +125,8 @@ describe('BaseSqlQuery e2e', () => {
           ],
         },
       });
-      expect(res.data.columns).toHaveLength(3);
-      expect(res.data.rows).toEqual([
+      expect(res.columns).toHaveLength(3);
+      expect(res.rows).toEqual([
         {
           [`${table.fields[0].id}`]: 'Charlie',
           [`${table.fields[1].id}`]: 40,
@@ -134,8 +146,8 @@ describe('BaseSqlQuery e2e', () => {
           },
         ],
       });
-      expect(res.data.columns).toHaveLength(3);
-      expect(res.data.rows).toEqual([
+      expect(res.columns).toHaveLength(3);
+      expect(res.rows).toEqual([
         {
           [`${table.fields[0].id}`]: 'Charlie',
           [`${table.fields[1].id}`]: 40,
@@ -181,8 +193,8 @@ describe('BaseSqlQuery e2e', () => {
           },
         ],
       });
-      expect(res.data.columns).toHaveLength(2);
-      expect(res.data.rows).toEqual([
+      expect(res.columns).toHaveLength(2);
+      expect(res.rows).toEqual([
         {
           [`${table.fields[2].id}`]: 'Backend Developer',
           [`${table.fields[1].id}_${StatisticsFunc.Average}`]: 30,
@@ -238,8 +250,8 @@ describe('BaseSqlQuery e2e', () => {
         from: table.id,
         groupBy: [{ column: table.fields[1].id, type: BaseQueryColumnType.Field }],
       });
-      expect(res.data.columns).toHaveLength(1);
-      expect(res.data.rows).toEqual(
+      expect(res.columns).toHaveLength(1);
+      expect(res.rows).toEqual(
         expect.arrayContaining([
           { [`${table.fields[1].id}`]: '2024-01-01' },
           { [`${table.fields[1].id}`]: '2024-01-02' },
@@ -274,11 +286,8 @@ describe('BaseSqlQuery e2e', () => {
         from: table.id,
         groupBy: [{ column: table.fields[0].id, type: BaseQueryColumnType.Field }],
       });
-      expect(res.data.columns).toHaveLength(1);
-      expect(res.data.rows).toEqual([
-        {},
-        { [`${table.fields[0].id}`]: globalThis.testConfig.userName },
-      ]);
+      expect(res.columns).toHaveLength(1);
+      expect(res.rows).toEqual([{}, { [`${table.fields[0].id}`]: globalThis.testConfig.userName }]);
     });
 
     it('limit and offset', async () => {
@@ -287,8 +296,8 @@ describe('BaseSqlQuery e2e', () => {
         limit: 1,
         offset: 1,
       });
-      expect(res.data.columns).toHaveLength(3);
-      expect(res.data.rows).toHaveLength(1);
+      expect(res.columns).toHaveLength(3);
+      expect(res.rows).toHaveLength(1);
     });
 
     describe('from', () => {
@@ -309,8 +318,8 @@ describe('BaseSqlQuery e2e', () => {
             },
           },
         });
-        expect(res.data.columns).toHaveLength(3);
-        expect(res.data.rows).toEqual([
+        expect(res.columns).toHaveLength(3);
+        expect(res.rows).toEqual([
           {
             [`${table.fields[0].id}`]: 'Charlie',
             [`${table.fields[1].id}`]: 40,
@@ -349,10 +358,8 @@ describe('BaseSqlQuery e2e', () => {
             },
           ],
         });
-        expect(res.data.columns).toHaveLength(1);
-        expect(res.data.rows).toEqual([
-          { [`${table.fields[1].id}_${StatisticsFunc.Average}`]: 40 },
-        ]);
+        expect(res.columns).toHaveLength(1);
+        expect(res.rows).toEqual([{ [`${table.fields[1].id}_${StatisticsFunc.Average}`]: 40 }]);
       });
 
       it('from query include aggregation', async () => {
@@ -374,10 +381,8 @@ describe('BaseSqlQuery e2e', () => {
             ],
           },
         });
-        expect(res.data.columns).toHaveLength(1);
-        expect(res.data.rows).toEqual([
-          { [`${table.fields[1].id}_${StatisticsFunc.Average}`]: 30 },
-        ]);
+        expect(res.columns).toHaveLength(1);
+        expect(res.rows).toEqual([{ [`${table.fields[1].id}_${StatisticsFunc.Average}`]: 30 }]);
       });
 
       it('from query include aggregation and filter', async () => {
@@ -410,10 +415,8 @@ describe('BaseSqlQuery e2e', () => {
             },
           },
         });
-        expect(res.data.columns).toHaveLength(1);
-        expect(res.data.rows).toEqual([
-          { [`${table.fields[1].id}_${StatisticsFunc.Average}`]: 40 },
-        ]);
+        expect(res.columns).toHaveLength(1);
+        expect(res.rows).toEqual([{ [`${table.fields[1].id}_${StatisticsFunc.Average}`]: 40 }]);
       });
 
       it('from query include aggregation and filter and orderBy and groupBy', async () => {
@@ -459,10 +462,8 @@ describe('BaseSqlQuery e2e', () => {
             ],
           },
         });
-        expect(res.data.columns).toHaveLength(1);
-        expect(res.data.rows).toEqual([
-          { [`${table.fields[1].id}_${StatisticsFunc.Average}`]: 40 },
-        ]);
+        expect(res.columns).toHaveLength(1);
+        expect(res.rows).toEqual([{ [`${table.fields[1].id}_${StatisticsFunc.Average}`]: 40 }]);
       });
 
       it('from query include aggregation, filter query aggregation field', async () => {
@@ -512,8 +513,8 @@ describe('BaseSqlQuery e2e', () => {
             ],
           },
         });
-        expect(res.data.columns).toHaveLength(2);
-        expect(res.data.rows).toEqual([
+        expect(res.columns).toHaveLength(2);
+        expect(res.rows).toEqual([
           {
             [`${table.fields[1].id}_${StatisticsFunc.Sum}`]: 60,
             [`${table.fields[2].id}`]: 'Frontend Developer',
@@ -592,8 +593,8 @@ describe('BaseSqlQuery e2e', () => {
             ],
           },
         });
-        expect(res.data.columns).toHaveLength(2);
-        expect(res.data.rows).toEqual([
+        expect(res.columns).toHaveLength(2);
+        expect(res.rows).toEqual([
           {
             [`${table.fields[1].id}_${StatisticsFunc.Sum}`]: 60,
             [`${table.fields[2].id}`]: 'Frontend Developer',
@@ -689,8 +690,8 @@ describe('BaseSqlQuery e2e', () => {
           },
         ],
       });
-      expect(res.data.columns).toHaveLength(4);
-      expect(res.data.rows).toEqual([
+      expect(res.columns).toHaveLength(4);
+      expect(res.rows).toEqual([
         {
           [`${table1.fields[0].id}`]: 'Alice',
           [`${table1.fields[1].id}`]: 20,
@@ -721,8 +722,8 @@ describe('BaseSqlQuery e2e', () => {
           },
         ],
       });
-      expect(res.data.columns).toHaveLength(4);
-      expect(res.data.rows).toEqual([
+      expect(res.columns).toHaveLength(4);
+      expect(res.rows).toEqual([
         {
           [`${table1.fields[0].id}`]: 'Alice',
           [`${table1.fields[1].id}`]: 20,
@@ -770,8 +771,8 @@ describe('BaseSqlQuery e2e', () => {
           },
         ],
       });
-      expect(res.data.columns).toHaveLength(2);
-      expect(res.data.rows).toEqual([
+      expect(res.columns).toHaveLength(2);
+      expect(res.rows).toEqual([
         {
           [`${table1.fields[0].id}`]: 'Bob',
           [`${table2.fields[0].id}`]: 'Eve',

@@ -5,7 +5,13 @@ import { z } from '../zod';
 import { pluginInstallStorageSchema } from './types';
 
 export const GET_DASHBOARD_INSTALL_PLUGIN =
-  '/base/{baseId}/dashboard/{dashboardId}/plugin/{installPluginId}';
+  '/base/{baseId}/dashboard/{dashboardId}/plugin/{pluginInstallId}';
+
+export const getDashboardInstallPluginRoSchema = z.object({
+  baseId: z.string(),
+  dashboardId: z.string(),
+  pluginInstallId: z.string(),
+});
 
 export const getDashboardInstallPluginVoSchema = z.object({
   pluginId: z.string(),
@@ -22,11 +28,7 @@ export const GetDashboardInstallPluginRoute: RouteConfig = registerRoute({
   path: GET_DASHBOARD_INSTALL_PLUGIN,
   description: 'Get a dashboard install plugin by id',
   request: {
-    params: z.object({
-      baseId: z.string(),
-      dashboardId: z.string(),
-      installPluginId: z.string(),
-    }),
+    params: getDashboardInstallPluginRoSchema,
   },
   responses: {
     200: {
@@ -44,9 +46,9 @@ export const GetDashboardInstallPluginRoute: RouteConfig = registerRoute({
 export const getDashboardInstallPlugin = async (
   baseId: string,
   dashboardId: string,
-  installPluginId: string
+  pluginInstallId: string
 ) => {
   return axios.get<IGetDashboardInstallPluginVo>(
-    urlBuilder(GET_DASHBOARD_INSTALL_PLUGIN, { baseId, dashboardId, installPluginId })
+    urlBuilder(GET_DASHBOARD_INSTALL_PLUGIN, { baseId, dashboardId, pluginInstallId })
   );
 };

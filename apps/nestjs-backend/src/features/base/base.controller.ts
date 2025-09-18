@@ -12,8 +12,6 @@ import {
   ICreateBaseFromTemplateRo,
   updateOrderRoSchema,
   IUpdateOrderRo,
-  baseQuerySchemaRo,
-  IBaseQuerySchemaRo,
   createBaseInvitationLinkRoSchema,
   CreateBaseInvitationLinkRo,
   updateBaseInvitationLinkRoSchema,
@@ -200,15 +198,6 @@ export class BaseController {
   @Get(':baseId/permission')
   async getPermission(): Promise<IGetBasePermissionVo> {
     return await this.baseService.getPermission();
-  }
-
-  @Get(':baseId/query')
-  @Permissions('base|query_data')
-  async sqlQuery(
-    @Param('baseId') baseId: string,
-    @Query(new ZodValidationPipe(baseQuerySchemaRo)) query: IBaseQuerySchemaRo
-  ) {
-    return this.baseQueryService.baseQuery(baseId, query.query, query.cellFormat);
   }
 
   @Permissions('base|invite_link')

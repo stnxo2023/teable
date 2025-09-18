@@ -20,6 +20,7 @@ export const DashboardGrid = (props: { dashboardId: string }) => {
   const isExpandPlugin = useIsExpandPlugin();
   const { t } = useTranslation(dashboardConfig.i18nNamespaces);
   const [isDragging, setIsDragging] = useState(false);
+  const [isSmallScreen, setIsSmallScreen] = useState(true);
   const basePermissions = useBasePermission();
   const canMange = basePermissions?.['base|update'];
   const { data: dashboardData } = useQuery({
@@ -56,10 +57,17 @@ export const DashboardGrid = (props: { dashboardId: string }) => {
         })),
       }}
       breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+      onBreakpointChange={(newBreakpoint) => {
+        if (newBreakpoint === 'xs' || newBreakpoint === 'xxs') {
+          setIsSmallScreen(true);
+        } else {
+          setIsSmallScreen(false);
+        }
+      }}
       rowHeight={80}
       margin={[16, 16]}
       containerPadding={[16, 16]}
-      cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+      cols={{ lg: 12, md: 12, sm: 12, xs: 1, xxs: 1 }}
       draggableHandle=".dashboard-draggable-handle"
       onResize={() => setIsDragging(true)}
       onResizeStop={(layout) => {
@@ -71,8 +79,8 @@ export const DashboardGrid = (props: { dashboardId: string }) => {
         setIsDragging(false);
         onLayoutChange(layout);
       }}
-      isResizable={canMange}
-      isDraggable={canMange}
+      isResizable={canMange && !isSmallScreen}
+      isDraggable={canMange && !isSmallScreen}
     >
       {layout.map(({ pluginInstallId, x, y, w, h }) => (
         <div
